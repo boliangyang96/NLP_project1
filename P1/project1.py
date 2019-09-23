@@ -74,7 +74,6 @@ def unigramAddK(corpus, k):
         for word in line:
             if word.lower() not in unigramProbs:
                 unigramProbs[word.lower()] = 0
-                unigramCount[word.lower()] = 0
             unigramProbs[word.lower()] += 1
             totalCount += 1
     for word in unigramProbs:
