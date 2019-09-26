@@ -1,14 +1,15 @@
+import numpy as np
+
 # process file
 def getCorpus(filename):
     corpus = []
     for line in open(filename, 'r'):
         #define the start word <s>
-        #newLine = ['<s>']
-        newLine = []
+        newLine = ['<s>']
         for word in line.split():
             newLine.append(word.lower())
-        # append stop word
-        #new_line.append('</s>')
+        # stop word
+        newLine.append('</s>')
         corpus.append(newLine)
     return corpus
 
@@ -92,6 +93,55 @@ def bigramAddK(corpus, k, unigramCount):
     for word in bigramProbs:
         bigramProbs[word] = 1.0 * (bigramProbs[word] + k) / (unigramCount[word[0]] + k * len(unigramCount))
     return bigramProbs
+
+# compute the perplexity for unigram
+def unigramPerplexity(line, unigramProbs):
+    result = []
+    for word in line:
+        if word in unigramProbs:
+            result.append(-np.log(unigramProbs[word]))
+        else:
+            result.append(-np.log(unigramProbs['<unk>']))
+    return np.exp(1.0 / len(unigramProbs) * np.sum(result))
+
+# compute the perplexity for bigram
+def bigramPerplexity(line, bigramProbs, startProb):
+    result = [-np.log(startProb)]
+    for bigramTuple in line:
+        if bigramTuple in bigramProbs:
+            result.append(-np.log(bigramProbs[bigramTuple]))
+        elif (bigramTuple[0], '<unk>') in bigramProbs:
+            result.append(-np.log(bigramProbs[(bigramTuple[0], '<unk>')]))
+        elif ('<unk>', bigramTuple[1]) in bigramProbs:
+            result.append(-np.log(bigramProbs[('<unk>', bigramTuple[1])]))
+        else:
+            result.append(-np.log(bigramProbs[('<unk>', '<unk>')]))
+    return np.exp(1.0 / len(bigramProbs) * np.sum(result))
+
+# classify the reviews using unigram perplexity, 0 for truthful, 1 for deceptive
+def unigramClassifier(corpus, truthfulProbs, deceptiveProbs):
+    result = []
+    for line in corpus:
+        truthfulPerplexity = unigramPerplexity(line, truthfulProbs)
+        deceptivePerplexity = unigramPerplexity(line, deceptiveProbs)
+        if truthfulPerplexity <= deceptivePerplexity:
+            result.append(0)
+        else:
+            result.append(1)
+    return result
+
+# classify the reviews using bigram perplexity, 0 for truthful, 1 for deceptive
+# need to get the unigram probability with unk first
+def bigramClassifier(corpus, truthfulProbs, deceptiveProbs, unigramTruthfulProbsUnk, unigramDeceptiveProbsUnk):
+    result = []
+    for line in corpus:
+        truthfulPerplexity = bigramPerplexity(line, truthfulProbs, unigramTruthfulProbsUnk['<s>'])
+        deceptivePerplexity = bigramPerplexity(line, deceptiveProbs, unigramDeceptiveProbsUnk['<s>'])
+        if truthfulPerplexity <= deceptivePerplexity:
+            result.append(0)
+        else:
+            result.append(1)
+    return result
 
 if __name__ == "__main__":
     # test one line file
