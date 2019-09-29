@@ -2,12 +2,14 @@ from sklearn.naive_bayes import GaussianNB, MultinomialNB, BernoulliNB
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from nltk.corpus import stopwords
 
+import csv
+
 ## Constant
 NLTK = stopwords.words('english')
 
 ## Global settings
 N_GRAM = (1,2)  ## tuple with lower and upper bound; eg: (1,1) is unigram, (1,2) is combination of unigram and bigram
-STOPWORDS = NLTK   ## values: None, NLTK
+STOPWORDS = 'english'   ## values: None, 'english', NLTK
 VECTORIZER = CountVectorizer   ## values: CountVectorizer, TfidfVectorizer
 NB_METHOD = MultinomialNB   ## values: GaussianNB, MultinomialNB, BernoulliNB
 
@@ -50,3 +52,39 @@ if __name__ == "__main__":
     print(sum(y_val_pred == y_val))  ## correct
     print(len(y_val))  ## total
     print(sum(y_val_pred == y_val) / len(y_val))  ## accuracy
+
+    """
+    csv output code
+    with open("nb_result.csv", "w", newline="") as csvfile:
+        writer = csv.writer(csvfile, delimiter=",")
+        writer.writerow(["Id","Prediction"])
+        t_count = f_count = 0
+        for i,y in enumerate(y_val):
+            if y:
+                writer.writerow([t_count, y_val_pred[i]])
+                t_count += 1
+            else:
+                writer.writerow([f_count, y_val_pred[i]])
+                f_count += 1
+    """
+
+    """ txt result output """
+    tr_t = list()
+    tr_f = list()
+    de_t = list()
+    de_f = list()
+    tr_count = de_count = 0
+    for i,y in enumerate(y_val):
+        if y:
+            if y_val_pred[i]: tr_t.append(tr_count)
+            else: tr_f.append(tr_count)
+            tr_count += 1
+        else:
+            if y_val_pred[i]: de_f.append(de_count)
+            else: de_t.append(de_count)
+            de_count += 1
+
+    print("truthful output correct:", tr_t)
+    print("truthful output incorrect:", tr_f)
+    print("deceptive output correct:", de_t)
+    print("deceptive output incorrect:", de_f)
