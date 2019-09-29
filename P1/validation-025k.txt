@@ -1,0 +1,32 @@
+accuracy for unigram validation/truthful for k = 0.00: 0.375
+accuracy for unigram validation/deceptive for k = 0.00: 0.765625
+accuracy for bigram validation/truthful for k = 0.00: 0.5234375
+accuracy for bigram validation/deceptive for k = 0.00: 0.75
+
+
+
+accuracy for unigram validation/truthful for k = 0.25: 0.3671875
+accuracy for unigram validation/deceptive for k = 0.25: 0.765625
+accuracy for bigram validation/truthful for k = 0.25: 0.1875
+accuracy for bigram validation/deceptive for k = 0.25: 0.9140625
+
+
+
+accuracy for unigram validation/truthful for k = 0.50: 0.359375
+accuracy for unigram validation/deceptive for k = 0.50: 0.7734375
+accuracy for bigram validation/truthful for k = 0.50: 0.140625
+accuracy for bigram validation/deceptive for k = 0.50: 0.90625
+
+
+
+accuracy for unigram validation/truthful for k = 0.75: 0.359375
+accuracy for unigram validation/deceptive for k = 0.75: 0.7734375
+accuracy for bigram validation/truthful for k = 0.75: 0.1328125
+accuracy for bigram validation/deceptive for k = 0.75: 0.9140625
+
+
+
+accuracy for unigram validation/truthful for k = 1.00: 0.359375
+accuracy for unigram validation/deceptive for k = 1.00: 0.7734375
+accuracy for bigram validation/truthful for k = 1.00: 0.109375
+accuracy for bigram validation/deceptive for k = 1.00: 0.921875

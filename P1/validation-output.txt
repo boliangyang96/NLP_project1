@@ -1,0 +1,35 @@
+Keep all words, including special characters (90708 words):
+
+accuracy for unigram validation/truthful: 0.375
+accuracy for unigram validation/deceptive: 0.765625
+accuracy for bigram validation/truthful: 0.5234375
+accuracy for bigram validation/deceptive: 0.75
+
+
+[('.', 4692), (',', 2949), ('!', 520), (')', 351), ('(', 323), ('-', 215), ('$', 209), (':', 111), ('?', 103), (';', 57), ('&', 47), ('%', 10), ('/', 7), ('@', 6), ('#', 5), ('[', 4), (']', 4), ('+', 3), ('*', 1), ('=', 1), ('<', 1), ('~', 1)]
+[('.', 4173), (',', 2699), ('!', 524), (')', 92), ('(', 91), ('$', 54), (';', 40), ('?', 40), ('-', 39), (':', 28), ('%', 3), ('&', 3)]
+81088
+[('.', 1091), (',', 688), ('!', 112), (')', 90), ('(', 89), ('-', 68), ('$', 45), ('?', 27), (':', 23), ('&', 12), (';', 5), ('>', 5), ('#', 4), ('@', 3), ('%', 2), ('/', 2), ('*', 1), ('~', 1)]
+[('.', 999), (',', 654), ('!', 103), (')', 22), ('(', 22), (';', 18), ('$', 9), ('?', 8), ('-', 7), (':', 5), ('&', 1)]
+
+
+Remove all ',' and '.' (83067 words):
+
+accuracy for unigram validation/truthful: 0.3828125
+accuracy for unigram validation/deceptive: 0.765625
+accuracy for bigram validation/truthful: 0.515625
+accuracy for bigram validation/deceptive: 0.734375
+
+Remove all special characters ",.!?;:#$%&()*+-/<=>@[]^_`{}~<>|\\" (81088 words):
+
+accuracy for unigram validation/truthful: 0.3359375
+accuracy for unigram validation/deceptive: 0.6953125
+accuracy for bigram validation/truthful: 0.578125
+accuracy for bigram validation/deceptive: 0.6875
+
+Remove all ',' and '.' and '!' (82547 words):
+
+accuracy for unigram validation/truthful: 0.3828125
+accuracy for unigram validation/deceptive: 0.765625
+accuracy for bigram validation/truthful: 0.5390625
+accuracy for bigram validation/deceptive: 0.703125
