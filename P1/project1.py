@@ -113,18 +113,29 @@ def unigramPerplexity(line, unigramProbs):
     return np.exp(1.0 / len(result) * sum(result))
 
 # compute the perplexity for bigram
-def bigramPerplexity(line, bigramProbs, startProb):
-    #result = [-np.log(startProb)]
-    result = []
-    for bigramTuple in line:
-        if bigramTuple in bigramProbs:
-            result.append(-np.log(bigramProbs[bigramTuple]))
-        elif (bigramTuple[0], '<unk>') in bigramProbs:
-            result.append(-np.log(bigramProbs[(bigramTuple[0], '<unk>')]))
-        elif ('<unk>', bigramTuple[1]) in bigramProbs:
-            result.append(-np.log(bigramProbs[('<unk>', bigramTuple[1])]))
-        else:
-            result.append(-np.log(bigramProbs[('<unk>', '<unk>')]))
+# first if is for add-k: if a pair of word tuple has count 0, simply use the numerator as k (use this together with add-k)
+# else is for bigram perplexity calculation without add-k smoothing
+def bigramPerplexity(line, bigramProbs, unigramProbs, unigramCount = [], k = 0):
+    result = [-np.log(unigramProbs['<s>'])]
+    if len(unigramCount) > 0 and k > 0:
+        for bigramTuple in line:
+            if bigramTuple in bigramProbs:
+                result.append(-np.log(bigramProbs[bigramTuple]))
+            else:
+                first = bigramTuple[0]
+                if first not in unigramCount:
+                    first = '<unk>'
+                result.append(-np.log(k / (unigramCount[first] + k * len(unigramCount))))
+    else:
+        for bigramTuple in line:
+            if bigramTuple in bigramProbs:
+                result.append(-np.log(bigramProbs[bigramTuple]))
+            elif (bigramTuple[0], '<unk>') in bigramProbs:
+                result.append(-np.log(bigramProbs[(bigramTuple[0], '<unk>')]))
+            elif ('<unk>', bigramTuple[1]) in bigramProbs:
+                result.append(-np.log(bigramProbs[('<unk>', bigramTuple[1])]))
+            else:
+                result.append(-np.log(bigramProbs[('<unk>', '<unk>')]))
     return np.exp(1.0 / len(result) * sum(result))
 
 # classify the reviews using unigram perplexity, 0 for truthful, 1 for deceptive
@@ -143,11 +154,12 @@ def unigramClassifier(corpus, truthfulProbs, deceptiveProbs):
 
 # classify the reviews using bigram perplexity, 0 for truthful, 1 for deceptive
 # need to get the unigram probability with unk first
-def bigramClassifier(corpus, truthfulProbs, deceptiveProbs, unigramTruthfulProbsUnk, unigramDeceptiveProbsUnk):
+def bigramClassifier(corpus, truthfulProbs, deceptiveProbs, unigramTruthfulProbsUnk, unigramDeceptiveProbsUnk, \
+    unigramTruthfulCount=[], unigramDeceptiveCount=[], k = 0):
     result = []
     for line in corpus:
-        truthfulPerplexity = bigramPerplexity(line, truthfulProbs, unigramTruthfulProbsUnk['<s>'])
-        deceptivePerplexity = bigramPerplexity(line, deceptiveProbs, unigramDeceptiveProbsUnk['<s>'])
+        truthfulPerplexity = bigramPerplexity(line, truthfulProbs, unigramTruthfulProbsUnk, unigramTruthfulCount, k)
+        deceptivePerplexity = bigramPerplexity(line, deceptiveProbs, unigramDeceptiveProbsUnk, unigramDeceptiveCount, k)
         #print('t',truthfulPerplexity)
         #print('d',deceptivePerplexity)
         if truthfulPerplexity <= deceptivePerplexity:
@@ -225,9 +237,11 @@ if __name__ == "__main__":
     '''
 
     
-    # select best add-k:
+    # select best add-k: (0.01, 0.69140625); (0.002, 0.71875) best->(0.06, 0.890625)
     k = 0
-    while (k < 1.05):
+    best = -1
+    bestK = 0
+    while (k < 0.1):
         #print(k)
         unigramTruthfulTrainAddK = unigramAddK(corpusTruthfulTrainUnk, k)
         unigramDeceptiveTrainAddK = unigramAddK(corpusDeceptiveTrainUnk, k)
@@ -236,40 +250,58 @@ if __name__ == "__main__":
 
         unigramTruthfulValPerp = unigramClassifier(corpusTruthfulVal, unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK)
         #print(unigramTruthfulValPerp)
-        print('accuracy for unigram validation/truthful for k = %.2f:' %k),
+        print('accuracy for unigram validation/truthful for k = %.3f:' %k),
         print(accuracy(unigramTruthfulValPerp, [0 for i in range(len(unigramTruthfulValPerp))]))
 
         unigramDeceptiveValPerp = unigramClassifier(corpusDeceptiveVal, unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK)
         #print(unigramDeceptiveValPerp)
-        print('accuracy for unigram validation/deceptive for k = %.2f:' %k),
+        print('accuracy for unigram validation/deceptive for k = %.3f:' %k),
         print(accuracy(unigramDeceptiveValPerp, [1 for i in range(len(unigramDeceptiveValPerp))]))
 
-        bigramTruthfulValPerp = bigramClassifier(bigramCorpusTruthfulVal, bigramTruthfulTrainAddk, bigramDeceptiveTrainAddk, unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK)
-        print('accuracy for bigram validation/truthful for k = %.2f:' %k),
+        bigramTruthfulValPerp = bigramClassifier(bigramCorpusTruthfulVal, bigramTruthfulTrainAddk, bigramDeceptiveTrainAddk, \
+            unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK, unigramTruthfulTrainUnk[1], unigramDeceptiveTrainUnk[1], k)
+        print('accuracy for bigram validation/truthful for k = %.3f:' %k),
         print(accuracy(bigramTruthfulValPerp, [0 for l in range(len(bigramTruthfulValPerp))]))
 
-        bigramDeceptiveValPerp = bigramClassifier(bigramCorpusDeceptiveVal, bigramTruthfulTrainAddk, bigramDeceptiveTrainAddk, unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK)
-        print('accuracy for bigram validation/deceptive for k = %.2f:' %k),
+        bigramDeceptiveValPerp = bigramClassifier(bigramCorpusDeceptiveVal, bigramTruthfulTrainAddk, bigramDeceptiveTrainAddk, \
+            unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK, unigramTruthfulTrainUnk[1], unigramDeceptiveTrainUnk[1], k)
+        print('accuracy for bigram validation/deceptive for k = %.3f:' %k),
         print(accuracy(bigramDeceptiveValPerp, [1 for l in range(len(bigramDeceptiveValPerp))]))
 
         print('\n\n')
-        k += 0.25
+        temp1 = accuracy(bigramTruthfulValPerp, [0 for l in range(len(bigramTruthfulValPerp))])
+        temp2 = accuracy(bigramDeceptiveValPerp, [1 for l in range(len(bigramDeceptiveValPerp))])
+        if best < (temp1+temp2)/2:
+            best = (temp1+temp2)/2
+            bestK = k
+        
+        k += 0.01
+    print(bestK,best)
     
     '''
     # test
     corpusTest = getCorpus('DATASET/test/test.txt')
     bigramCorpusTest = getBigramCorpus(corpusTest)
+    
+    # add k here
+    k = 0.06
+    unigramTruthfulTrainAddK = unigramAddK(corpusTruthfulTrainUnk, k)
+    unigramDeceptiveTrainAddK = unigramAddK(corpusDeceptiveTrainUnk, k)
+    bigramTruthfulTrainAddk = bigramAddK(corpusTruthfulTrainUnk, k, unigramTruthfulTrainUnk[1])
+    bigramDeceptiveTrainAddk = bigramAddK(corpusDeceptiveTrainUnk, k, unigramDeceptiveTrainUnk[1])
+    bigramTestPerp = bigramClassifier(bigramCorpusTest, bigramTruthfulTrainAddk, bigramDeceptiveTrainAddk, \
+            unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK, unigramTruthfulTrainUnk[1], unigramDeceptiveTrainUnk[1], k)
 
-    unigramTestPerp = unigramClassifier(corpusTest, unigramTruthfulTrainUnk[0], unigramDeceptiveTrainUnk[0])
-    bigramTestPerp = bigramClassifier(bigramCorpusTest, bigramTruthfulTrainUnk, bigramDeceptiveTrainUnk, unigramTruthfulTrainUnk[0], unigramDeceptiveTrainUnk[0])
+    #unigramTestPerp = unigramClassifier(corpusTest, unigramTruthfulTrainUnk[0], unigramDeceptiveTrainUnk[0])
+    #bigramTestPerp = bigramClassifier(bigramCorpusTest, bigramTruthfulTrainUnk, bigramDeceptiveTrainUnk, unigramTruthfulTrainUnk[0], unigramDeceptiveTrainUnk[0])
 
-    outputFile1 = open('test-unigram-output.csv', 'w')
-    outputFile1.write('Id,Prediction\n')
-    for i in range(len(unigramTestPerp)):
-        outputFile1.write(str(i) + ',' + str(unigramTestPerp[i]) + '\n')
-    outputFile1.close()
+    #outputFile1 = open('test-unigram-output.csv', 'w')
+    #outputFile1.write('Id,Prediction\n')
+    #for i in range(len(unigramTestPerp)):
+        #outputFile1.write(str(i) + ',' + str(unigramTestPerp[i]) + '\n')
+    #outputFile1.close()
 
-    outputFile2 = open('test-bigram-output.csv', 'w')
+    outputFile2 = open('test-bigram.csv', 'w')
     outputFile2.write('Id,Prediction\n')
     for i in range(len(bigramTestPerp)):
         outputFile2.write(str(i) + ',' + str(bigramTestPerp[i]) + '\n')
