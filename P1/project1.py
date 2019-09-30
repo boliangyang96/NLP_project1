@@ -173,12 +173,6 @@ def accuracy(pred, real):
     return 1.0 * sum([1 for i in range(len(pred)) if pred[i] == real[i]]) / len(pred)
 
 if __name__ == "__main__":
-    # test one line file
-    #c = getCorpus('test.txt')
-    #u = getUnigramProbs(c)
-    #b = getBigramProbs(c, u[1])
-    #print(b)
-
     # process training data
     corpusTruthfulTrain = getCorpus('DATASET/train/truthful.txt')
     corpusDeceptiveTrain = getCorpus('DATASET/train/deceptive.txt')
@@ -236,12 +230,12 @@ if __name__ == "__main__":
     print(accuracy(bigramDeceptiveValPerp, [1 for l in range(len(bigramDeceptiveValPerp))]))
     '''
 
-    
-    # select best add-k: (0.01, 0.69140625); (0.002, 0.71875) best->(0.06, 0.890625)
+    '''
+    # select best add-k: first obtain (0.01, 0.69140625); then obatin best->(0.06, 0.890625)
     k = 0
     best = -1
     bestK = 0
-    while (k < 0.1):
+    while (k < 1.01):
         #print(k)
         unigramTruthfulTrainAddK = unigramAddK(corpusTruthfulTrainUnk, k)
         unigramDeceptiveTrainAddK = unigramAddK(corpusDeceptiveTrainUnk, k)
@@ -275,11 +269,119 @@ if __name__ == "__main__":
             best = (temp1+temp2)/2
             bestK = k
         
-        k += 0.01
-    print(bestK,best)
+        k += 0.1
+    print(bestK,best)'''
+
     
+    k = 0.06
+    unigramTruthfulTrainAddK = unigramAddK(corpusTruthfulTrainUnk, k)
+    unigramDeceptiveTrainAddK = unigramAddK(corpusDeceptiveTrainUnk, k)
+    bigramTruthfulTrainAddk = bigramAddK(corpusTruthfulTrainUnk, k, unigramTruthfulTrainUnk[1])
+    bigramDeceptiveTrainAddk = bigramAddK(corpusDeceptiveTrainUnk, k, unigramDeceptiveTrainUnk[1])
+
+    bigramTruthfulValPerp = bigramClassifier(bigramCorpusTruthfulVal, bigramTruthfulTrainAddk, bigramDeceptiveTrainAddk, \
+    unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK, unigramTruthfulTrainUnk[1], unigramDeceptiveTrainUnk[1], k)
+    #print('accuracy for bigram validation/truthful for k = %.3f:' %k),
+    #print(accuracy(bigramTruthfulValPerp, [0 for l in range(len(bigramTruthfulValPerp))]))
+    truthfulOutCorrect = []
+    truthfulOutIncorrect = []
+    for i in range(len(bigramTruthfulValPerp)):
+        if (bigramTruthfulValPerp[i] == 0):
+            truthfulOutCorrect.append(i)
+        else:
+            truthfulOutIncorrect.append(i)
+    print('truthful output correct:', len(truthfulOutCorrect))
+    print('truthful output incorrect:', len(truthfulOutIncorrect))
+
+    bigramDeceptiveValPerp = bigramClassifier(bigramCorpusDeceptiveVal, bigramTruthfulTrainAddk, bigramDeceptiveTrainAddk, \
+    unigramTruthfulTrainAddK, unigramDeceptiveTrainAddK, unigramTruthfulTrainUnk[1], unigramDeceptiveTrainUnk[1], k)
+    #print('accuracy for bigram validation/deceptive for k = %.3f:' %k),
+    #print(accuracy(bigramDeceptiveValPerp, [1 for l in range(len(bigramDeceptiveValPerp))]))
+    deceptiveOutCorrect = []
+    deceptiveOutIncorrect = []
+    for i in range(len(bigramDeceptiveValPerp)):
+        if (bigramDeceptiveValPerp[i] == 1):
+            deceptiveOutCorrect.append(i)
+        else:
+            deceptiveOutIncorrect.append(i)
+    print('deceptive output correct:', len(deceptiveOutCorrect))
+    print('deceptive output incorrect:', len(deceptiveOutIncorrect))
+
+    nbTruthCorrect = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 62, 63, 64, 66, 67, 68, 69, 70, 71, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85, 86, 87, 88, 89, 91, 92, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 109, 110, 111, 112, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127]
+    nbTruthIncorrect = [14, 16, 61, 65, 72, 83, 90, 93, 108, 113]
+
+    nbDecepCorrect = [0, 1, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 69, 70, 72, 73, 74, 75, 76, 77, 78, 79, 80, 82, 83, 84, 85, 86, 87, 88, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108, 109, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 122, 123, 125, 126, 127]
+    nbDecepIncorrect = [3, 5, 22, 55, 68, 71, 81, 89, 104, 110, 121, 124]
+
+    print(len(nbTruthCorrect),len(nbTruthIncorrect),len(nbDecepCorrect),len(nbDecepIncorrect))
+
+    bothCorrect = []
+    bothIncorrect = []
+    lmCorrect_nbIncorrect = []
+    lmIncorrect_nbCorrect = []
+    for i in range(len(corpusTruthfulVal)):
+        if i in truthfulOutCorrect and i in nbTruthCorrect:
+            bothCorrect.append(i)
+        elif i in truthfulOutCorrect and i in nbTruthIncorrect:
+            lmCorrect_nbIncorrect.append(i)
+        elif i in truthfulOutIncorrect and i in nbTruthCorrect:
+            lmIncorrect_nbCorrect.append(i)
+        elif i in truthfulOutIncorrect and i in nbTruthIncorrect:
+            bothIncorrect.append(i)
+    
+    #valCorpus = []
+    #for line in open('DATASET/validation/truthful.txt', 'r'):
+    #    valCorpus.append(line)
+
+    #outputFile1 = open('truthful-val.txt', 'w')
+    
+    #outputFile1.write('lm correct but nb incorrect:')
+    #for i in lmCorrect_nbIncorrect:
+    #    outputFile1.write('%d, %s' %(i, valCorpus[i]))
+    #outputFile1.write('lm incorrect but nb correct:')
+    #for i in lmIncorrect_nbCorrect:
+    #    outputFile1.write('%d, %s' %(i, valCorpus[i]))
+    #outputFile1.close()
+    
+    print('both correct:', len(bothCorrect))
+    print('both incorrect:', len(bothIncorrect))
+    print('lm correct but nb incorrect:', len(lmCorrect_nbIncorrect))
+    print('lm incorrect but nb correct:', len(lmIncorrect_nbCorrect))
+    
+    bothCorrect = []
+    bothIncorrect = []
+    lmCorrect_nbIncorrect = []
+    lmIncorrect_nbCorrect = []
+    for i in range(len(corpusDeceptiveVal)):
+        if i in deceptiveOutCorrect and i in nbDecepCorrect:
+            bothCorrect.append(i)
+        elif i in deceptiveOutCorrect and i in nbDecepIncorrect:
+            lmCorrect_nbIncorrect.append(i)
+        elif i in deceptiveOutIncorrect and i in nbDecepCorrect:
+            lmIncorrect_nbCorrect.append(i)
+        elif i in deceptiveOutIncorrect and i in nbDecepIncorrect:
+            bothIncorrect.append(i)
+
+    print('both correct:', len(bothCorrect))
+    print('both incorrect:', len(bothIncorrect))
+    print('lm correct but nb incorrect:', len(lmCorrect_nbIncorrect))
+    print('lm incorrect but nb correct:', len(lmIncorrect_nbCorrect))
+
+    #valCorpus = []
+    #for line in open('DATASET/validation/deceptive.txt', 'r'):
+    #    valCorpus.append(line)
+    #outputFile2 = open('deceptive-val.txt', 'w')
+    #outputFile2.write('lm correct but nb incorrect:')
+    #for i in lmCorrect_nbIncorrect:
+    #    outputFile2.write('%d, %s' %(i, valCorpus[i]))
+    #outputFile2.write('lm incorrect but nb correct:')
+    #for i in lmIncorrect_nbCorrect:
+    #    outputFile2.write('%d, %s' %(i, valCorpus[i]))
+    #outputFile2.close()
+
+
     '''
-    # test
+    # test predication
     corpusTest = getCorpus('DATASET/test/test.txt')
     bigramCorpusTest = getBigramCorpus(corpusTest)
     
@@ -307,7 +409,7 @@ if __name__ == "__main__":
         outputFile2.write(str(i) + ',' + str(bigramTestPerp[i]) + '\n')
     outputFile2.close()'''
 
-    '''
+    '''# overview of the training data
     sortedUnigramTPr = sorted(unigramTruthful[0].items(), key=lambda x: x[1], reverse=True)
     sortedUnigramTCo = sorted(unigramTruthful[1].items(), key=lambda x: x[1], reverse=True)
     #print('Top 20 unigram probabilities for Truthful: ', sortedUnigramTPr[:50])
