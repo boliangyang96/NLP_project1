@@ -8,9 +8,9 @@ import csv
 NLTK = stopwords.words('english')
 
 ## Global settings
-N_GRAM = (1,2)  ## tuple with lower and upper bound; eg: (1,1) is unigram, (1,2) is combination of unigram and bigram
-STOPWORDS = 'english'   ## values: None, 'english', NLTK
-VECTORIZER = CountVectorizer   ## values: CountVectorizer, TfidfVectorizer
+N_GRAM = (1,1)  ## tuple with lower and upper bound; eg: (1,1) is unigram, (1,2) is combination of unigram and bigram
+STOPWORDS = None   ## values: None, 'english', NLTK
+VECTORIZER = TfidfVectorizer   ## values: CountVectorizer, TfidfVectorizer
 NB_METHOD = MultinomialNB   ## values: GaussianNB, MultinomialNB, BernoulliNB
 
 
@@ -34,9 +34,6 @@ if __name__ == "__main__":
 
     x_train, y_train = parse_dataset(f_tr, label=True)
     x_train, y_train = parse_dataset(f_de, x_train, y_train, label=False)
-    x_val, y_val = parse_dataset(f_val_t, label=True)
-    x_val, y_val = parse_dataset(f_val_f, x_val, y_val, label=False)
-    x_test, _ = parse_dataset(f_test)
 
     ## vectorize
     vectorizer = VECTORIZER(ngram_range=N_GRAM, stop_words=STOPWORDS)
@@ -46,12 +43,21 @@ if __name__ == "__main__":
     nb = NB_METHOD()
     clf = nb.fit(x_transform, y_train)
 
-    ## test
+    ## validation
+    x_val, y_val = parse_dataset(f_val_t, label=True)
+    x_val, y_val = parse_dataset(f_val_f, x_val, y_val, label=False)
+
     x_val_trans = vectorizer.transform(x_val).toarray()
     y_val_pred = clf.predict(x_val_trans)
     print(sum(y_val_pred == y_val))  ## correct
     print(len(y_val))  ## total
     print(sum(y_val_pred == y_val) / len(y_val))  ## accuracy
+
+    ## test
+    x_test, _ = parse_dataset(f_test)
+    x_test_trans = vectorizer.transform(x_test).toarray()
+    y_test_pred = clf.predict(x_test_trans)
+
 
     """
     csv output code
@@ -68,7 +74,7 @@ if __name__ == "__main__":
                 f_count += 1
     """
 
-    """ txt result output """
+    """ txt result output
     tr_t = list()
     tr_f = list()
     de_t = list()
@@ -88,3 +94,14 @@ if __name__ == "__main__":
     print("truthful output incorrect:", tr_f)
     print("deceptive output correct:", de_t)
     print("deceptive output incorrect:", de_f)
+    """
+
+    """ test result (csv for kaggle upload) """
+    with open("./results/nb_test_result.csv", "w", newline="") as csvfile:
+        writer = csv.writer(csvfile, delimiter=",")
+        writer.writerow(["Id","Prediction"])
+        for i,y in enumerate(y_test_pred):
+            if y:
+                writer.writerow([i, 0])
+            else:
+                writer.writerow([i, 1])
